@@ -10,8 +10,13 @@ import android.view.SurfaceView;
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 
+import com.example.android2dgame.object.Circle;
 import com.example.android2dgame.object.Enemy;
 import com.example.android2dgame.object.Player;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 /*
  * Game manages all objects in the game and is responsible for updating all states and all objects to the screen
@@ -21,6 +26,7 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
     private final Player player;
     private final Joystick joystick;
     private final Enemy enemy;
+    private List<Enemy> enemyList = new ArrayList<Enemy>();
     private GameLoop gameLoop;
     private Context context;
 
@@ -86,7 +92,10 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
 
         player.draw(canvas);
         joystick.draw(canvas);
-        enemy.draw(canvas);
+//        enemy.draw(canvas);
+        for (Enemy enemy : enemyList) {
+            enemy.draw(canvas);
+        }
     }
 
     public void drawUPS(Canvas canvas) {
@@ -113,6 +122,25 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
         // update game state
         player.update();
         joystick.update();
-        enemy.update();
+//        enemy.update();
+
+        // spawn enemy if it is time to spawn new enemies
+        if (Enemy.readyToSpawn()) {
+            enemyList.add(new Enemy(getContext(), player));
+        }
+
+        // update state of each enemy
+        for (Enemy enemy : enemyList) {
+            enemy.update();
+        }
+
+        // iterate through enemyList and check for collision betw enemies and player
+        Iterator<Enemy> iteratorEnemy = enemyList.iterator();
+        while (iteratorEnemy.hasNext()) {
+            if (Circle.isColliding(iteratorEnemy.next(), player)) {
+                // remove enemy if it collides with player
+                iteratorEnemy.remove();
+            }
+        }
     }
 }
