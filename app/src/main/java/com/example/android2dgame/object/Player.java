@@ -1,10 +1,12 @@
-package com.example.android2dgame;
+package com.example.android2dgame.object;
 
 import android.content.Context;
-import android.graphics.Canvas;
-import android.graphics.Paint;
 
 import androidx.core.content.ContextCompat;
+
+import com.example.android2dgame.GameLoop;
+import com.example.android2dgame.Joystick;
+import com.example.android2dgame.R;
 
 /**
  * Player is the main character of the game, which the user can control with the touch joystick.
@@ -13,7 +15,7 @@ import androidx.core.content.ContextCompat;
 
 public class Player extends Circle {
 
-    private static final double SPEED_PIXELS_PER_SECOND = 400.0;
+    public static final double SPEED_PIXELS_PER_SECOND = 400.0;
     private static final double MAX_SPEED = SPEED_PIXELS_PER_SECOND / GameLoop.MAX_UPS;
 
     private final Joystick joystick;
