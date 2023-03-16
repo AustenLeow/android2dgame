@@ -13,6 +13,7 @@ import androidx.core.content.ContextCompat;
 import com.example.android2dgame.object.Circle;
 import com.example.android2dgame.object.Enemy;
 import com.example.android2dgame.object.Player;
+import com.example.android2dgame.object.Spell;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -27,8 +28,11 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
     private final Joystick joystick;
     private final Enemy enemy;
     private List<Enemy> enemyList = new ArrayList<Enemy>();
+    private List<Spell> spellList = new ArrayList<Spell>();
     private GameLoop gameLoop;
     private Context context;
+    private int joystickPointerId = 0;
+    private int numberOfSpellsToCast = 0;
 
     public Game(Context context) {
         super(context);
@@ -51,20 +55,39 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         // handle touch event actions
-        switch(event.getAction()) {
+        switch(event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
-                if (joystick.isPressed((double)event.getX(), (double)event.getY())) {
+            case MotionEvent.ACTION_POINTER_DOWN:
+                if (joystick.getIsPressed()) {
+                    // Joystick was pressed before this event -> cast spell
+                    numberOfSpellsToCast++;
+                }
+                else if (joystick.isPressed((double)event.getX(), (double)event.getY())) {
+                    // Joystick is pressed in this event -> setIsPressed(true) and store ID
+                    joystickPointerId = event.getPointerId(event.getActionIndex());
                     joystick.setIsPressed(true);
                 }
+                else {
+                    // joystick was not pressed -> cast spell
+                    numberOfSpellsToCast++;
+                }
                 return true;
+
             case MotionEvent.ACTION_MOVE:
+                // joystick was pressed previously and is now moved
                 if (joystick.getIsPressed()) {
                     joystick.setActuator((double)event.getX(), (double)event.getY());
                 }
                 return true;
+
             case MotionEvent.ACTION_UP:
-                joystick.setIsPressed(false);
-                joystick.resetActuator();
+            case MotionEvent.ACTION_POINTER_UP:
+                if (joystickPointerId == event.getPointerId(event.getActionIndex())) {
+                    // joystick was let go off -> setIsPressed(false) and resetActuator
+                    joystick.setIsPressed(false);
+                    joystick.resetActuator();
+                }
+
                 return true;
         }
 
@@ -96,6 +119,12 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
         for (Enemy enemy : enemyList) {
             enemy.draw(canvas);
         }
+        for (Spell spell : spellList) {
+            spell.draw(canvas);
+        }
+
+        
+
     }
 
     public void drawUPS(Canvas canvas) {
@@ -130,17 +159,40 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
         }
 
         // update state of each enemy
+        while (numberOfSpellsToCast > 0) {
+            spellList.add(new Spell(getContext(), player));
+            numberOfSpellsToCast--;
+        }
         for (Enemy enemy : enemyList) {
             enemy.update();
         }
 
-        // iterate through enemyList and check for collision betw enemies and player
+        // iterate through enemyList and check for collision betw enemies and player and spells
         Iterator<Enemy> iteratorEnemy = enemyList.iterator();
         while (iteratorEnemy.hasNext()) {
-            if (Circle.isColliding(iteratorEnemy.next(), player)) {
+            Circle enemy = iteratorEnemy.next();
+            if (Circle.isColliding(enemy, player)) {
                 // remove enemy if it collides with player
                 iteratorEnemy.remove();
+                player.setHealthPoints(player.getHealthPoints() - 1);
+                continue;
             }
+
+            Iterator<Spell> iteratorSpell = spellList.iterator();
+            while (iteratorSpell.hasNext()) {
+                Circle spell = iteratorSpell.next();
+                // remove spell if collide with enemy
+                if (Circle.isColliding(spell, enemy)) {
+                    iteratorSpell.remove();
+                    iteratorEnemy.remove();
+                    break;
+                }
+            }
+        }
+
+        // update state of each spell
+        for (Spell spell : spellList) {
+            spell.update();
         }
     }
 }
