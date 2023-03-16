@@ -6,9 +6,10 @@ import android.graphics.Canvas;
 import androidx.core.content.ContextCompat;
 
 import com.example.android2dgame.GameLoop;
-import com.example.android2dgame.Joystick;
+import com.example.android2dgame.gamepanel.Joystick;
 import com.example.android2dgame.R;
 import com.example.android2dgame.Utils;
+import com.example.android2dgame.gamepanel.HealthBar;
 
 /**
  * Player is the main character of the game, which the user can control with the touch joystick.
